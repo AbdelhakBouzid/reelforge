@@ -225,3 +225,9 @@ Additional utility endpoints:
 - Credits are deducted before generation and refunded on failures.
 - Webhook events are deduplicated via `ProcessedWebhookEvent`.
 - `MockProvider` enables operation without external AI provider keys.
+## Common Vercel Build Fix
+
+If first deploy fails during `npm install` at `prisma:generate`, this repo now uses a safe fallback in `scripts/prisma-generate.mjs`:
+
+- If `DATABASE_URL` is missing, a placeholder URL is used only for Prisma client generation.
+- Runtime still requires the real `DATABASE_URL` in Vercel environment variables.
