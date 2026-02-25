@@ -29,7 +29,10 @@ export function applyCors(req: VercelRequest, res: VercelResponse) {
 
   res.setHeader("Access-Control-Allow-Origin", allowedOrigin);
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,PATCH,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Authorization,Content-Type,Stripe-Signature");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Authorization,Content-Type,Stripe-Signature,PayPal-Transmission-Id,PayPal-Transmission-Time,PayPal-Transmission-Sig,PayPal-Cert-Url,PayPal-Auth-Algo",
+  );
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Vary", "Origin");
 }

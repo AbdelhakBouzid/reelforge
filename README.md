@@ -1,233 +1,167 @@
 # ReelForge
 
-ReelForge is a production-minded full-stack SaaS for AI image and short reel generation with credit-based usage, monthly subscriptions, and Stripe checkout.
+ReelForge is a full-stack SaaS to generate AI images and short reels from customer prompts.
 
-- Frontend: Vite + React + TypeScript + TailwindCSS
+- Frontend: Vite + React + TypeScript + Tailwind
 - Backend: Vercel Serverless Functions (`/api`)
 - Database: PostgreSQL + Prisma
-- Auth: Email/password + JWT access/refresh token rotation
-- Payments: Stripe subscriptions + one-time credit packs
-- AI: Provider interface + `MockProvider` (works without AI keys)
+- Auth: Email/password + JWT access/refresh
+- Billing: PayPal subscriptions + one-time credit packs
+- AI: `mock` mode (default) or live `replicate` mode
 
-## Monorepo Structure
+## Structure
 
 ```text
 /
-  web/                 # Vite React app
-  api/                 # Vercel serverless functions
-  packages/shared/     # shared zod schemas/constants/types
-  prisma/              # Prisma schema + seed
-  package.json         # workspaces + scripts
+  web/
+  api/
+  packages/shared/
+  prisma/
+  scripts/
 ```
 
-## Core Features
+## Scripts
 
-- Auth endpoints: register, login, refresh, logout, me
-- Password reset token flow (DB-backed; dev responses include reset token fallback until email is integrated)
-- Credits ledger with debit/refund and balance endpoint
-- Generation lifecycle: queued -> processing -> succeeded/failed
-- Billing:
-  - subscription checkout
-  - credit pack checkout
-  - webhook processing with signature verification
-- Admin APIs for users, generations, payments, plans, packs
-- Responsive SaaS UI (public, protected, admin)
-- Light/dark theme, toasts, modals, skeleton/empty/error states
+- `npm install`
+- `npm run dev`
+- `npm run build`
+- `npm run prisma:migrate`
+- `npm run prisma:seed`
 
-## Environment Variables
+## Required Environment Variables (Vercel)
 
-Copy `.env.example` to `.env` at repository root.
+Add these in **Project Settings -> Environment Variables** for **All Environments**:
 
-```bash
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/reelforge"
-JWT_SECRET="replace-with-strong-access-secret"
-JWT_REFRESH_SECRET="replace-with-strong-refresh-secret"
-STRIPE_SECRET_KEY=""
-STRIPE_WEBHOOK_SECRET=""
-STRIPE_SUCCESS_URL="http://localhost:5173/billing?success=1"
-STRIPE_CANCEL_URL="http://localhost:5173/billing?canceled=1"
-VITE_API_URL="/api"
-ADMIN_EMAIL="admin@reelforge.app"
-ADMIN_PASSWORD="ChangeThisPassword123!"
-```
+Core:
+- `DATABASE_URL`
+- `JWT_SECRET`
+- `JWT_REFRESH_SECRET`
+- `VITE_API_URL` = `/api`
+- `ADMIN_EMAIL`
+- `ADMIN_PASSWORD`
 
-Copy `web/.env.example` to `web/.env.local` for local frontend dev.
+PayPal:
+- `PAYPAL_CLIENT_ID`
+- `PAYPAL_CLIENT_SECRET`
+- `PAYPAL_ENV` = `sandbox` or `live`
+- `PAYPAL_WEBHOOK_ID`
+- `PAYPAL_RETURN_URL` (example: `https://YOUR_DOMAIN/billing?paypal=success`)
+- `PAYPAL_CANCEL_URL` (example: `https://YOUR_DOMAIN/billing?paypal=cancel`)
+- `PAYPAL_PLAN_ID_STARTER`
+- `PAYPAL_PLAN_ID_PRO`
+- `PAYPAL_PLAN_ID_SCALE`
 
-For local split-port mode (`web` on `5173`, API on `3000`) set:
-
-```bash
-VITE_API_URL="http://localhost:3000/api"
-```
-
-For Vercel same-project deployment set:
-
-```bash
-VITE_API_URL="/api"
-```
-
-## Scripts (root)
-
-- `npm install` -> installs dependencies and runs Prisma generate
-- `npm run dev` -> runs Vite frontend + `vercel dev` API
-- `npm run build` -> builds shared package + web app
-- `npm run prisma:migrate` -> runs Prisma dev migration
-- `npm run prisma:seed` -> seeds plans/packs and admin user
+AI Provider:
+- `AI_PROVIDER` = `mock` or `replicate`
+- `REPLICATE_API_TOKEN`
+- `REPLICATE_IMAGE_MODEL` (format `owner/model`)
+- `REPLICATE_VIDEO_MODEL` (format `owner/model`)
+- `REPLICATE_POLL_INTERVAL_MS`
+- `REPLICATE_TIMEOUT_MS`
 
 ## Local Setup
 
-1. Install dependencies:
-
+1. Install dependencies
 ```bash
 npm install
 ```
 
-2. Configure environment:
-
+2. Copy env files
 ```bash
 cp .env.example .env
 cp web/.env.example web/.env.local
 ```
 
-3. Set `web/.env.local` value:
-
+3. For local split-port mode set in `web/.env.local`
 ```bash
 VITE_API_URL="http://localhost:3000/api"
 ```
 
-4. Run migrations:
-
+4. DB migrate + seed
 ```bash
 npm run prisma:migrate
-```
-
-5. Seed defaults and admin user:
-
-```bash
 npm run prisma:seed
 ```
 
-6. Start app:
-
+5. Start
 ```bash
 npm run dev
 ```
 
-- Frontend: `http://localhost:5173`
-- Local API: `http://localhost:3000/api`
+## Vercel Deployment (No Output Errors)
 
-## Stripe Notes
+Use exactly:
+- Root Directory: `./`
+- Install Command: `npm install`
+- Build Command: `npm run build`
+- Output Directory: `dist`
 
-If Stripe keys are missing, checkout endpoints return clear `503 STRIPE_NOT_CONFIGURED` responses (the app still works with mock generation).
+Why `dist`:
+- web builds to `web/dist`
+- build script copies `web/dist` -> root `dist` automatically
 
-### Webhook Verification (Vercel)
+## PayPal Setup (Subscriptions + Packs)
 
-`/api/stripe/webhook` verifies signatures using raw request body (`stripe.webhooks.constructEvent(...)`) and `STRIPE_WEBHOOK_SECRET`.
+### A) Subscriptions
 
-Set webhook URL in Stripe Dashboard:
+1. In PayPal dashboard, create 3 subscription plans:
+- Starter
+- Pro
+- Scale
 
-```text
-https://<your-domain>/api/stripe/webhook
-```
+2. Put their Plan IDs in env vars:
+- `PAYPAL_PLAN_ID_STARTER`
+- `PAYPAL_PLAN_ID_PRO`
+- `PAYPAL_PLAN_ID_SCALE`
 
-Recommended events:
-
-- `checkout.session.completed`
-- `invoice.paid`
-- `customer.subscription.updated`
-- `customer.subscription.deleted`
-
-## Vercel Deployment (Single Project)
-
-This repo is designed for one Vercel project (frontend + `/api` serverless functions in the same deployment).
-
-1. Push this repo to GitHub.
-2. In Vercel, click **Add New Project** and import the GitHub repo.
-3. Keep root directory as repository root.
-4. Vercel will use `vercel.json`:
-   - `buildCommand`: `npm run build`
-   - `outputDirectory`: `web/dist`
-5. Add environment variables in Vercel Project Settings:
-   - `DATABASE_URL`
-   - `JWT_SECRET`
-   - `JWT_REFRESH_SECRET`
-   - `STRIPE_SECRET_KEY`
-   - `STRIPE_WEBHOOK_SECRET`
-   - `STRIPE_SUCCESS_URL`
-   - `STRIPE_CANCEL_URL`
-   - `VITE_API_URL` (set to `/api`)
-   - `ADMIN_EMAIL`
-   - `ADMIN_PASSWORD`
-6. Deploy.
-
-After first deploy, run database tasks against production DB:
-
+3. Run seed so local plans link to PayPal IDs:
 ```bash
-npx prisma migrate deploy
 npm run prisma:seed
 ```
 
-(Use your production `DATABASE_URL` and env values while running these commands.)
+### B) One-time credit packs
 
-## Seed Behavior
+- Packs are charged by amount directly through PayPal Orders (no fixed PayPal plan ID required).
 
-`prisma/seed.ts` creates:
+### C) Webhooks
 
-- Default plans: Starter, Pro, Scale
-- Default packs: Boost 50, Boost 250, Boost 1000
-- Admin user from `ADMIN_EMAIL`/`ADMIN_PASSWORD`
+Create webhook URL:
+- `https://YOUR_DOMAIN/api/paypal/webhook`
 
-## API Surface
+Enable events:
+- `BILLING.SUBSCRIPTION.ACTIVATED`
+- `BILLING.SUBSCRIPTION.CANCELLED`
+- `BILLING.SUBSCRIPTION.PAYMENT.COMPLETED`
+- `PAYMENT.CAPTURE.COMPLETED`
 
-### Auth
+Then copy webhook ID to `PAYPAL_WEBHOOK_ID`.
 
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-- `POST /api/auth/refresh`
-- `POST /api/auth/logout`
-- `GET /api/me`
+## API Endpoints (Billing)
 
-### Credits
+- `POST /api/paypal/create-checkout-session`
+- `POST /api/paypal/capture-order`
+- `POST /api/paypal/activate-subscription`
+- `POST /api/paypal/webhook`
 
-- `GET /api/credits/balance`
+Backward compatibility alias kept:
+- `POST /api/stripe/create-checkout-session` -> PayPal handler
+- `POST /api/stripe/webhook` -> PayPal webhook handler
 
-### Generations
+## AI Reel Generation Modes
 
-- `POST /api/generations/image`
-- `POST /api/generations/video`
-- `GET /api/generations?type=&status=&page=`
-- `GET /api/generations/:id`
+### Demo mode (works immediately)
+- Set `AI_PROVIDER=mock`
+- Generation works with placeholder media
 
-### Stripe
+### Live mode (real AI)
+- Set `AI_PROVIDER=replicate`
+- Add Replicate token and models
+- Deploy again
 
-- `POST /api/stripe/create-checkout-session`
-- `POST /api/stripe/webhook`
+Then users can enter prompt descriptions and generate real reels from the dashboard.
 
-### Admin
+## Notes
 
-- `GET /api/admin/users`
-- `GET /api/admin/generations`
-- `GET /api/admin/payments`
-- `PATCH /api/admin/plans/:id`
-- `PATCH /api/admin/packs/:id`
-
-Additional utility endpoints:
-
-- `GET /api/catalog`
-- `GET /api/admin/plans`
-- `GET /api/admin/packs`
-- `PATCH /api/me/profile`
-- `PATCH /api/me/password`
-
-## Production Notes
-
-- Auth endpoints include basic in-memory rate limiting per IP.
-- All key inputs are validated with Zod on client and server.
 - Credits are deducted before generation and refunded on failures.
-- Webhook events are deduplicated via `ProcessedWebhookEvent`.
-- `MockProvider` enables operation without external AI provider keys.
-## Common Vercel Build Fix
-
-If first deploy fails during `npm install` at `prisma:generate`, this repo now uses a safe fallback in `scripts/prisma-generate.mjs`:
-
-- If `DATABASE_URL` is missing, a placeholder URL is used only for Prisma client generation.
-- Runtime still requires the real `DATABASE_URL` in Vercel environment variables.
+- Password reset token flow is DB-backed.
+- Admin panel supports plans/packs/users/payments/generations.

@@ -50,19 +50,25 @@ export function dbGenerationStatusToWire(status: GenerationStatus): "queued" | "
   }
 }
 
-export function stripeSubStatusToDb(status: string): SubscriptionStatus {
-  switch (status) {
+export function billingSubStatusToDb(status: string): SubscriptionStatus {
+  const normalized = status.toLowerCase();
+
+  switch (normalized) {
     case "active":
       return SubscriptionStatus.ACTIVE;
     case "canceled":
+    case "cancelled":
       return SubscriptionStatus.CANCELED;
     case "incomplete":
+    case "approval_pending":
       return SubscriptionStatus.INCOMPLETE;
     case "past_due":
       return SubscriptionStatus.PAST_DUE;
     case "trialing":
       return SubscriptionStatus.TRIALING;
     case "unpaid":
+    case "suspended":
+    case "expired":
       return SubscriptionStatus.UNPAID;
     default:
       return SubscriptionStatus.INCOMPLETE;

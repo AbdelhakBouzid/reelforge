@@ -27,6 +27,8 @@ export type CreditPack = {
 export type CatalogResponse = {
   plans: Plan[];
   packs: CreditPack[];
+  paypalEnabled: boolean;
+  aiProvider: "mock" | "replicate";
 };
 
 export type Generation = {

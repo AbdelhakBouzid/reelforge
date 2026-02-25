@@ -128,7 +128,7 @@ export function AdminPlansPage() {
             error={form.formState.errors.monthlyCredits?.message}
           />
           <Input
-            label="Stripe Price ID"
+            label="PayPal Plan ID"
             {...form.register("stripePriceId")}
             error={form.formState.errors.stripePriceId?.message}
           />

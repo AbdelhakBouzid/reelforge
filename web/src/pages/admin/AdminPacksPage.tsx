@@ -131,7 +131,7 @@ export function AdminPacksPage() {
           <Input label="Credits" type="number" {...form.register("credits")} error={form.formState.errors.credits?.message} />
           <Input label="Price (cents)" type="number" {...form.register("price")} error={form.formState.errors.price?.message} />
           <Input
-            label="Stripe Price ID"
+            label="PayPal Pack ID \(optional\)"
             {...form.register("stripePriceId")}
             error={form.formState.errors.stripePriceId?.message}
           />

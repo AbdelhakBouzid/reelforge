@@ -80,7 +80,7 @@ export function LandingPage() {
           <Video className="h-6 w-6 text-[rgb(var(--primary))]" />
           <h3 className="mt-3 text-lg font-bold">Production Ready</h3>
           <p className="mt-1 text-sm text-[rgb(var(--text-muted))]">
-            Built for Vercel serverless deployment, Stripe billing, and Prisma PostgreSQL.
+            Built for Vercel serverless deployment, PayPal billing, and Prisma PostgreSQL.
           </p>
         </Card>
       </section>
