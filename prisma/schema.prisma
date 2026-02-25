@@ -1,0 +1,193 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  INCOMPLETE
+  PAST_DUE
+  TRIALING
+  UNPAID
+}
+
+enum LedgerReason {
+  SUBSCRIPTION_CREDIT
+  PACK_PURCHASE
+  GENERATION_DEBIT
+  GENERATION_REFUND
+  MANUAL_ADJUSTMENT
+}
+
+enum RefType {
+  SUBSCRIPTION
+  CREDIT_PACK
+  GENERATION
+  PAYMENT
+  WEBHOOK
+  MANUAL
+}
+
+enum GenerationType {
+  IMAGE
+  VIDEO
+}
+
+enum GenerationStatus {
+  QUEUED
+  PROCESSING
+  SUCCEEDED
+  FAILED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+model User {
+  id                  String               @id @default(cuid())
+  email               String               @unique
+  passwordHash        String
+  name                String?
+  role                Role                 @default(USER)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  subscriptions       Subscription[]
+  ledgerEntries       CreditsLedger[]
+  generations         Generation[]
+  payments            Payment[]
+  refreshTokens       RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
+
+  @@index([role])
+}
+
+model Plan {
+  id             String          @id @default(cuid())
+  name           String          @unique
+  stripePriceId  String?         @unique
+  monthlyCredits Int
+  isActive       Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  subscriptions  Subscription[]
+}
+
+model CreditPack {
+  id            String   @id @default(cuid())
+  name          String   @unique
+  credits       Int
+  price         Int
+  stripePriceId String?  @unique
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Subscription {
+  id               String             @id @default(cuid())
+  userId           String
+  planId           String
+  stripeCustomerId String?
+  stripeSubId      String?            @unique
+  status           SubscriptionStatus @default(INCOMPLETE)
+  currentPeriodEnd DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan             Plan               @relation(fields: [planId], references: [id])
+
+  @@index([userId])
+  @@index([stripeCustomerId])
+}
+
+model CreditsLedger {
+  id        String       @id @default(cuid())
+  userId    String
+  delta     Int
+  reason    LedgerReason
+  refType   RefType?
+  refId     String?
+  createdAt DateTime     @default(now())
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model Generation {
+  id            String           @id @default(cuid())
+  userId        String
+  type          GenerationType
+  prompt        String
+  optionsJson   Json?
+  status        GenerationStatus @default(QUEUED)
+  costCredits   Int
+  assetUrl      String?
+  thumbUrl      String?
+  providerJobId String?
+  errorMessage  String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([status])
+}
+
+model Payment {
+  id                      String        @id @default(cuid())
+  userId                  String
+  stripePaymentIntentId   String?       @unique
+  stripeCheckoutSessionId String?       @unique
+  amount                  Int
+  currency                String
+  status                  PaymentStatus
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+  user                    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model RefreshToken {
+  id        String   @id
+  userId    String
+  tokenHash String
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+model ProcessedWebhookEvent {
+  id            String   @id @default(cuid())
+  stripeEventId String   @unique
+  createdAt     DateTime @default(now())
+}

@@ -1,0 +1,20 @@
+{
+  "name": "@reelforge/api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@prisma/client": "^6.5.0",
+    "@reelforge/shared": "*",
+    "@vercel/node": "^5.0.4",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "stripe": "^18.0.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/node": "^22.13.10",
+    "typescript": "^5.6.3"
+  }
+}

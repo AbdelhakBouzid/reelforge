@@ -1,0 +1,93 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: 21 24 35;
+  --bg-soft: 30 35 50;
+  --text: 244 246 255;
+  --text-muted: 180 188 212;
+  --card: 34 40 58;
+  --card-border: 255 255 255;
+  --primary: 245 102 43;
+  --primary-strong: 218 83 28;
+  --ring: 245 102 43;
+}
+
+:root.light {
+  --bg: 247 249 255;
+  --bg-soft: 255 255 255;
+  --text: 28 32 48;
+  --text-muted: 104 114 142;
+  --card: 255 255 255;
+  --card-border: 32 43 77;
+  --primary: 215 84 31;
+  --primary-strong: 184 64 16;
+  --ring: 215 84 31;
+}
+
+* {
+  border-color: rgba(var(--card-border), 0.12);
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  font-family: "Manrope", system-ui, -apple-system, Segoe UI, sans-serif;
+  color: rgb(var(--text));
+  background:
+    radial-gradient(circle at 90% -20%, rgba(var(--primary), 0.18), transparent 42%),
+    radial-gradient(circle at 0% 20%, rgba(33, 179, 171, 0.12), transparent 32%),
+    rgb(var(--bg));
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "Space Grotesk", "Manrope", sans-serif;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(var(--primary), 0.5);
+}
+
+@layer components {
+  .rf-card {
+    @apply rounded-2xl border border-white/10 bg-[rgb(var(--card))]/85 backdrop-blur;
+  }
+
+  .rf-input {
+    @apply w-full rounded-xl border border-white/15 bg-black/10 px-4 py-3 text-sm text-[rgb(var(--text))] placeholder:text-[rgb(var(--text-muted))] focus:border-[rgb(var(--ring))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--ring))]/40;
+  }
+
+  .rf-btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition;
+  }
+
+  .rf-btn-primary {
+    @apply rf-btn bg-[rgb(var(--primary))] text-white hover:bg-[rgb(var(--primary-strong))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--ring))]/50;
+  }
+
+  .rf-btn-ghost {
+    @apply rf-btn border border-white/20 bg-white/5 text-[rgb(var(--text))] hover:bg-white/10;
+  }
+
+  .rf-link {
+    @apply text-[rgb(var(--primary))] hover:text-[rgb(var(--primary-strong))];
+  }
+}

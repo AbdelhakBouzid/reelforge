@@ -1,0 +1,14 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "types": ["vite/client", "react", "react-dom"],
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["./*"],
+      "@reelforge/shared": ["../../packages/shared/src/index.ts"],
+      "@reelforge/shared/*": ["../../packages/shared/src/*"]
+    }
+  },
+  "include": ["src", "vite.config.ts", "tailwind.config.ts"]
+}
